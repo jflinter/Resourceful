@@ -13,14 +13,14 @@ public enum ImageType: String {
 
 #if os(iOS)
 extension UIImage {
-    public func imageTyped(type: ImageType) -> UIImage? {
-        return UIImage(named: type.rawValue)
+    public convenience init?(typed type: ImageType) {
+        self.init(named: type.rawValue)
     }
 }
 #elseif os(OSX)
 extension NSImage {
-    public func imageTyped(type: ImageType) -> NSImage? {
-        return NSImage(named: type.rawValue)
+    public convenience init?(typed type: ImageType) {
+        self.init(named: type.rawValue)
     }
 }
 #endif
