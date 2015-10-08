@@ -6,10 +6,10 @@ import (
 	"os/exec"
 )
 
-func warn() {
+func warn() error {
 	srcroot := os.Getenv("SRCROOT")
 	if srcroot == "" {
-		panic(fmt.Errorf("SRCROOT should not be nil"))
+		return fmt.Errorf("SRCROOT should not be nil")
 	}
 	find := exec.Command(
 		"/usr/bin/find",
@@ -35,32 +35,33 @@ func warn() {
 	stdin, err := find.StdoutPipe()
 	match.Stdin = stdin
 	if err != nil {
-		panic(err)
+		return err
 	}
 	sed.Stdin, err = match.StdoutPipe()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	sed.Stdout = os.Stderr
 
 	err = match.Start()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = sed.Start()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = find.Run()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = match.Wait()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = sed.Wait()
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }

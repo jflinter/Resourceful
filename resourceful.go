@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"github.com/codegangsta/cli"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -71,15 +72,21 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) {
+		l := log.New(os.Stderr, "", 0)
 		enumType, err := parseFolder(c.String("input"))
 		if err != nil {
-			panic(err)
+			l.Println("Error parsing input file.")
+			os.Exit(1)
 		}
 		enumType.Name = "Image"
 		f, err := os.Create(c.String("output"))
+		if err != nil {
+			l.Println("Error writing output file")
+			os.Exit(1)
+		}
 		defer f.Close()
 		writer := bufio.NewWriter(f)
-		templ, err := template.New("swiftTemplate").Parse(swiftTemplate)
+		templ := template.Must(template.New("swiftTemplate").Parse(swiftTemplate))
 		err = templ.Execute(writer, enumType)
 		if err != nil {
 			panic(err)
@@ -87,7 +94,11 @@ func main() {
 		writer.Flush()
 
 		if c.Bool("warn") {
-			warn()
+			err = warn()
+			if err != nil {
+				l.Println("Error detecting warnings.")
+				os.Exit(1)
+			}
 		}
 
 	}
