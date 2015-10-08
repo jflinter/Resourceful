@@ -2,22 +2,52 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/codegangsta/cli"
 	"io/ioutil"
 	"os"
-	"os/exec"
+	"path"
 	"strings"
 	"text/template"
 )
 
-type SwiftEnum struct {
+type EnumCase struct {
 	Name     string
 	RawValue string
 }
 
-type TemplateArgs struct {
-	EnumValues []SwiftEnum
+type EnumType struct {
+	Name   string
+	Values []EnumCase
+	Nested []EnumType
+}
+
+func parseFolder(filepath string) (EnumType, error) {
+	files, err := ioutil.ReadDir(filepath)
+	if err != nil {
+		return EnumType{}, err
+	}
+	enumCases := []EnumCase{}
+	enumTypes := []EnumType{}
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), "imageset") {
+			rawValue := strings.Split(f.Name(), ".")[0]
+			name := strings.Title(rawValue)
+			name = strings.Replace(name, "_", "__", -1)
+			name = strings.Replace(name, "-", "_", -1)
+			enum := EnumCase{name, rawValue}
+			enumCases = append(enumCases, enum)
+		} else if !strings.Contains(f.Name(), ".") {
+			folderName := path.Join(filepath, f.Name())
+			enumType, err := parseFolder(folderName)
+			if err != nil {
+				return EnumType{}, err
+			}
+			enumTypes = append(enumTypes, enumType)
+		}
+	}
+	_, file := path.Split(filepath)
+	name := strings.Title(file)
+	return EnumType{name, enumCases, enumTypes}, nil
 }
 
 func main() {
@@ -41,88 +71,23 @@ func main() {
 		},
 	}
 	app.Action = func(c *cli.Context) {
-		files, err := ioutil.ReadDir(c.String("input"))
+		enumType, err := parseFolder(c.String("input"))
 		if err != nil {
 			panic(err)
 		}
-		enumValues := []SwiftEnum{}
-		for _, f := range files {
-			if strings.HasSuffix(f.Name(), "imageset") {
-				rawValue := strings.Split(f.Name(), ".")[0]
-				name := strings.Title(rawValue)
-				name = strings.Replace(name, "_", "__", -1)
-				name = strings.Replace(name, "-", "_", -1)
-				enum := SwiftEnum{name, rawValue}
-				enumValues = append(enumValues, enum)
-			}
-		}
+		enumType.Name = "Image"
 		f, err := os.Create(c.String("output"))
 		defer f.Close()
 		writer := bufio.NewWriter(f)
-		templateArgs := TemplateArgs{enumValues}
 		templ, err := template.New("swiftTemplate").Parse(swiftTemplate)
-		err = templ.Execute(writer, templateArgs)
+		err = templ.Execute(writer, enumType)
 		if err != nil {
 			panic(err)
 		}
 		writer.Flush()
 
 		if c.Bool("warn") {
-			srcroot := os.Getenv("SRCROOT")
-			if srcroot == "" {
-				panic(fmt.Errorf("SRCROOT should not be nil"))
-			}
-			find := exec.Command(
-				"/usr/bin/find",
-				srcroot,
-				"-name",
-				"*.swift",
-				"-print0",
-			)
-			match := exec.Command(
-				"xargs",
-				"-0",
-				"egrep",
-				"--with-filename",
-				"--line-number",
-				"--only-matching",
-				"UIImage\\(named",
-			)
-			sed := exec.Command(
-				"sed",
-				"s/UIImage.*/ warning: legacy use of imageNamed; consider using Resourceful/",
-			)
-
-			match.Stdin, err = find.StdoutPipe()
-			if err != nil {
-				panic(err)
-			}
-			sed.Stdin, err = match.StdoutPipe()
-			if err != nil {
-				panic(err)
-			}
-			sed.Stdout = os.Stderr
-
-			err = match.Start()
-			if err != nil {
-				panic(err)
-			}
-			err = sed.Start()
-			if err != nil {
-				panic(err)
-			}
-			err = find.Run()
-			if err != nil {
-				panic(err)
-			}
-			err = match.Wait()
-			if err != nil {
-				panic(err)
-			}
-			err = sed.Wait()
-			if err != nil {
-				panic(err)
-			}
+			warn()
 		}
 
 	}
