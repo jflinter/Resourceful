@@ -25,11 +25,11 @@ func warn() {
 		"--with-filename",
 		"--line-number",
 		"--only-matching",
-		"UIImage\\(named",
+		"(UIImage|NSImage)\\(named",
 	)
 	sed := exec.Command(
 		"sed",
-		"s/UIImage.*/ warning: legacy use of imageNamed; consider using Resourceful/",
+		"s/(UIImage|NSImage).*/ warning: legacy use of imageNamed; consider using Resourceful/",
 	)
 
 	stdin, err := find.StdoutPipe()
