@@ -53,6 +53,7 @@ func parseFolder(filepath string) (EnumType, error) {
 
 func main() {
 	app := cli.NewApp()
+	l := log.New(os.Stderr, "", 0)
 	app.Name = "resourceful"
 	app.Usage = "Add strong typing to imageNamed: in Swift apps"
 	app.Flags = []cli.Flag{
@@ -68,13 +69,28 @@ func main() {
 			Usage:  "The destination file for generated Swift code",
 			EnvVar: "SCRIPT_OUTPUT_FILE_0",
 		},
-		cli.BoolFlag{
-			Name:  "warn, w",
+	}
+	app.Commands = []cli.Command{
+		{
+			Name:  "warn",
 			Usage: "Generate xcode warnings for usage of imageNamed",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "warndirectory, w",
+					Usage:  "The directory to search for legacy usage of imageNamed",
+					EnvVar: "SRCROOT",
+				},
+			},
+			Action: func(c *cli.Context) {
+				err := warn(c.String("warndirectory"))
+				if err != nil {
+					l.Println("Error detecting warnings.")
+					os.Exit(1)
+				}
+			},
 		},
 	}
 	app.Action = func(c *cli.Context) {
-		l := log.New(os.Stderr, "", 0)
 		enumType, err := parseFolder(c.String("input"))
 		if err != nil {
 			l.Println("Error parsing input file.")
@@ -94,15 +110,6 @@ func main() {
 			panic(err)
 		}
 		writer.Flush()
-
-		if c.Bool("warn") {
-			err = warn()
-			if err != nil {
-				l.Println("Error detecting warnings.")
-				os.Exit(1)
-			}
-		}
-
 	}
 
 	app.Run(os.Args)

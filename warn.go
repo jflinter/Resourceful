@@ -6,14 +6,13 @@ import (
 	"os/exec"
 )
 
-func warn() error {
-	srcroot := os.Getenv("SRCROOT")
-	if srcroot == "" {
-		return fmt.Errorf("SRCROOT should not be nil")
+func warn(directory string) error {
+	if directory == "" {
+		return fmt.Errorf("warn directory should not be nil")
 	}
 	find := exec.Command(
 		"/usr/bin/find",
-		srcroot,
+		directory,
 		"-name",
 		"*.swift",
 		"-print0",
@@ -29,6 +28,7 @@ func warn() error {
 	)
 	sed := exec.Command(
 		"sed",
+		"-E",
 		"s/(UIImage|NSImage).*/ warning: legacy use of imageNamed; consider using Resourceful/",
 	)
 
