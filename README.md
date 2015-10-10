@@ -19,7 +19,7 @@ There are [many][0] [other][1] [libraries][2] that do this, but this one is mine
 
 ## Installation
 
-First, install Resourceful using go:
+First, install Resourceful:
 ```
 go get github.com/jflinter/resourceful
 ```
