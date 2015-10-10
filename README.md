@@ -19,10 +19,12 @@ There are [many][0] [other][1] [libraries][2] that do this, but this one is mine
 
 ## Installation
 
-First, install Resourceful using homebrew:
+First, install Resourceful using go:
 ```
-brew install resourceful
+go get github.com/jflinter/resourceful
 ```
+
+(You may need to [install go][3] first.)
 
 Next, in your Xcode build phases settings, add a new Run Script Build Phase at the beginning of your build. For its contents, simply type
 ```
@@ -57,3 +59,4 @@ And you're done!
 [0]: https://github.com/mac-cain13/R.swift
 [1]: https://github.com/AliSoftware/SwiftGen
 [2]: https://github.com/kaandedeoglu/Shark
+[3]: https://golang.org/doc/install
