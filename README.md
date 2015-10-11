@@ -17,14 +17,14 @@ There are [many][0] [other][1] [libraries][2] that do this, but this one is mine
 - It works for both iOS and OS X projects
 - It can optionally generate warnings for you in places where you're still using `imageNamed` in your app.
 
-## Installation
+## Getting started
 
 First, install Resourceful:
+```bash
+cd /usr/local/bin
+curl -L -O https://github.com/jflinter/Resourceful/releases/download/0.2/resourceful.tar.gz
+tar -zxvf resourceful.tar.gz
 ```
-go get github.com/jflinter/resourceful
-```
-
-(You may need to [install go][3] first.)
 
 Next, in your Xcode build phases settings, add a new Run Script Build Phase at the beginning of your build. For its contents, simply type
 ```
